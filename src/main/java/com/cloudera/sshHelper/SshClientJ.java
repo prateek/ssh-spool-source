@@ -62,28 +62,43 @@ public class SshClientJ {
     return ret;
   }
 
-  public byte[] getContents( String filePath ) 
+  public File getTempLocalInstance( String remoteFilePath )
   {
-    byte[] buffer    = null;
+    File tempFile = null;
     SSHClient client = new SSHClient();
     // required if host is not in knownLocalHosts
     client.addHostKeyVerifier(new PromiscuousVerifier());
 
-    //TODO: stream instead of copy entire file
     try {
       client.connect(hostName);
       client.authPassword(userName, userPass);
 
-      File tempFile   = File.createTempFile("tmp", null, null);
+      tempFile = File.createTempFile("tmp", null, null);
       tempFile.deleteOnExit();
 
       SFTPClient sftp = client.newSFTPClient();
-      sftp.get(filePath, new FileSystemFile(tempFile));
-
-      buffer = FileUtils.readFileToByteArray( tempFile );
+      sftp.get(remoteFilePath, new FileSystemFile(tempFile));
       sftp.close();
       client.disconnect();
 
+    } catch( Exception e ) { 
+      //TODO: this needs to be more robust than just catching all exceptions
+      e.printStackTrace();
+      logger.error( e.toString() );
+      return null;
+    } 
+    
+    return tempFile;
+  }
+
+  public byte[] getContents( String remoteFilePath ) 
+  {
+    byte[] buffer = null;
+
+    //TODO: stream instead of copy entire file
+    try {
+      File tempFile = getTempLocalInstance( remoteFilePath );
+      buffer        = FileUtils.readFileToByteArray( tempFile );
     } catch( Exception e ) { 
       //TODO: this needs to be more robust than just catching all exceptions
       e.printStackTrace();

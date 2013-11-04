@@ -9,8 +9,8 @@ import java.io.ObjectInputStream;
 import java.io.FileOutputStream;
 import java.io.FileInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +27,7 @@ public class SshSpoolStateManager
   protected HashMap< String, FileProcessingState > stateMap;
   protected String filePath;
 
-  public SshSpoolStateManager( String filePath ) throws IOException
+  public SshSpoolStateManager( String filePath ) 
   {
     this.filePath = filePath + "/ssh-spool-state.out";
     this.stateMap = new HashMap< String, FileProcessingState >();
@@ -52,7 +52,7 @@ public class SshSpoolStateManager
     return pending;
   }
 
-  public void addProcessingList( ArrayList< String > paths ) throws IOException
+  public void addProcessingList( ArrayList< String > paths ) 
   {
     for( String file: paths ) 
     {
@@ -64,25 +64,25 @@ public class SshSpoolStateManager
     saveState();
   }
 
-  public void markFinished( String file ) throws IOException
+  public void markFinished( String file ) 
   {
     stateMap.put( file, FileProcessingState.SUCCEDED );
     saveState();
   }
 
-  public void markError( String file ) throws IOException
+  public void markError( String file ) 
   {
     stateMap.put( file, FileProcessingState.FAILED );
     saveState();
   }
 
-  public void markInProcess( String file ) throws IOException
+  public void markInProcess( String file ) 
   {
     stateMap.put( file, FileProcessingState.IN_PROCESS );
     saveState();
   }
 
-  public void markUnprocessedAsError() throws IOException
+  public void markUnprocessedAsError() 
   {
     for( Map.Entry< String, FileProcessingState > entry: stateMap.entrySet() )
     {
@@ -95,9 +95,15 @@ public class SshSpoolStateManager
     saveState();
   }
 
-  public void saveState() throws IOException
+  public void saveState() 
   {
-    saveMap();
+    try {
+      saveMap();
+    } catch( IOException e ) {
+      logger.error( e.toString() );
+      logger.error( "SshSpoolStateManager: Unable to persist state to disk. Crashing..." );
+      System.exit(-1);
+    }
   }
 
   protected void saveMap() throws IOException {

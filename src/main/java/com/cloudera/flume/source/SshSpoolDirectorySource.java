@@ -1,8 +1,10 @@
 package com.cloudera.flume.source;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -71,23 +73,35 @@ public class SshSpoolDirectorySource extends AbstractSource
       try {
 
         filesState.markInProcess( file );
-        byte[] fileContents = sshClient.getContents( file );
-        if( fileContents == null ) {
+        File tempFile = sshClient.getTempLocalInstance( file );
+        if( tempFile == null ) {
           logger.error( "Unable to retrieve contents: " + file );
           logger.error( "Marking file in error state: " + file );
           filesState.markError( file );
           continue;
         }
+
         Map< String, String > headers = new HashMap< String, String >();
         headers.put( "filename", file );
+        int line_counter = 1;
 
-        Event e = EventBuilder.withBody( fileContents, headers );
-        // Store the Event into this Source's associated Channel(s)
-        getChannelProcessor().processEvent(e);
+        Scanner s = new Scanner( tempFile )
+          .useDelimiter( SshSpoolDirectorySourceConstants.RECORD_DELIMITER);
+
+        while( s.hasNext() ) {
+          String record = s.next();
+          logger.debug("f:" + file + ", l: " + line_counter + ", r: " + record );
+
+          headers.put( "line_number", Integer.toString(line_counter++) );
+          Event e = EventBuilder.withBody( record, 
+              SshSpoolDirectorySourceConstants.FILE_CHARSET, headers );
+          // Store the Event into this Source's associated Channel(s)
+          getChannelProcessor().processEvent(e);
+        }
+        s.close();
 
         filesState.markFinished( file );
         logger.info("Successfully parsed: " + file );
-
       } catch (Throwable t) {
         // Log exception, handle individual exceptions as needed
         logger.error( "While processing: " + file + " - " + t.toString() );
