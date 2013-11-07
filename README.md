@@ -11,7 +11,7 @@ The SshSpoolSource mirrors many semantics from the SpoolingDirectorySource. Here
 - Can specify a remote directory to monitor for new files added
 - Any new files added in there are considered complete and ingested
 - Once a file is processed, it is considered complete, changes to it will not be picked up
-- The source retains the state of processed files, so it will not reprocess any files
+- The source persists the state of processed files to disk, so it will not reprocess any files; and it can pickup where it left off in the event of a restart. 
 
 
 Configuring Flume
