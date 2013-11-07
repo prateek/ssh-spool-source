@@ -2,7 +2,17 @@
 ssh-spool-source
 ================
 
-Prototype SshSpoolSource for Flume - think Spooling Directory Source over SSH
+Prototype SshSpoolSource for Flume - think Spooling Directory Source over SSH. Caveat Emptor: It is very much **pre-alpha**.
+
+Semantics
+---------
+The SshSpoolSource mirrors many semantics from the SpoolingDirectorySource. Here's what it supports at the moment:
+- SSH authorization using username/password (ssh-keys not supported yet)
+- Can specify a remote directory to monitor for new files added
+- Any new files added in there are considered complete and ingested
+- Once a file is processed, it is considered complete, changes to it will not be picked up
+- The source retains the state of processed files, so it will not reprocess any files
+
 
 Configuring Flume
 ------------------
